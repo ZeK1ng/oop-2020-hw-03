@@ -35,7 +35,7 @@ public class Sudoku {
 	 "000080079");
 	
 	// Provided hard 3 7 grid
-	// 1 solution this way, 6 solutions if the 7 is changed to 0
+	// 1 solution this way, 6 solution_count if the 7 is changed to 0
 	public static final int[][] hardGrid = Sudoku.stringsToGrid(
 	"3 7 0 0 0 0 0 8 0",
 	"0 0 1 0 9 3 0 0 0",
@@ -50,7 +50,7 @@ public class Sudoku {
 	
 	public static final int SIZE = 9;  // size of the whole 9x9 puzzle
 	public static final int PART = 3;  // size of each 3x3 part
-	public static final int MAX_SOLUTIONS = 100;
+	public static final int MAX_solution_count = 100;
 	
 	// Provided various static utility methods to
 	// convert data formats to int[][] grid.
@@ -128,36 +128,182 @@ public class Sudoku {
 		
 		System.out.println(sudoku); // print the raw problem
 		int count = sudoku.solve();
-		System.out.println("solutions:" + count);
+		System.out.println("solution_count:" + count);
 		System.out.println("elapsed:" + sudoku.getElapsed() + "ms");
 		System.out.println(sudoku.getSolutionText());
 	}
 	
 	
 	
+	private int sudoku_board[][];
+	private int solution_board[][];
+	private List<Spot> spotList;
+	private int solution_count;
+	private long timeElapsed;
+	
+	private class Spot implements Comparable<Spot>{
+		private int row,col,val ,validSize;
+		
+		public Spot (int row , int col) {
+			this.row = row;
+			this.col = col;
+			val = 0 ;
+			validSize = getvalidValues().size();
+		}
+		public void setVal(int val) {
+			this.val  = val;
+			sudoku_board[row][col] = val;
+		}
+		public int getVal() {
+			return val;
+		}
+		public Set<Integer> getvalidValues(){
+			Set<Integer> res = new HashSet<>();
+			for(int i = 0 ;i<10; i++) {
+				res.add(i);
+			}
+			// clear possible rows
+			for(int i = 0 ; i < SIZE; i++) {
+				res.remove(sudoku_board[i][this.col]);
+			}
+			for(int i = 0; i<SIZE; i++) {
+				res.remove(solution_board[this.row][i]);
+			}
+			int startR = (this.row/3)*PART;
+			int startC = (this.col/3)*PART;
+			for(int i = startR; i < startR+PART; i++) {
+				for(int j = 0 ; j < startC+PART; j++) {
+					res.remove(sudoku_board[i][j]);
+				}
+			}
+			return res;
+		}
+		
+		@Override
+		public int compareTo(Spot otherSpot) {
+			// TODO Auto-generated method stub
+			return this.validSize - otherSpot.validSize;
+		}
 
+	}
 	/**
 	 * Sets up based on the given ints.
 	 */
 	public Sudoku(int[][] ints) {
-		// YOUR CODE HERE
+		sudoku_board = new int[SIZE][SIZE];
+		spotList = new ArrayList<>();
+		solution_board = new int[SIZE][SIZE];
+		solution_count = 0;
+		timeElapsed= 0;
+		for(int i= 0; i< SIZE; i++) {
+			for(int j = 0; j < SIZE; j++) {
+				sudoku_board[i][j]=ints[i][j];
+			}
+		}
+		initSpots();
 	}
 	
 	
 	
+	private void initSpots() {
+		// TODO Auto-generated method stub
+		for(int i = 0; i< SIZE; i++) {
+			for(int j =0 ; j< SIZE ; j++) {
+				if(sudoku_board[i][j] == 0 ) {
+					Spot newSp = new Spot(i,j);
+					spotList.add(newSp);
+				}
+			}
+		}
+		Collections.sort(spotList);
+	}
+
+
 	/**
 	 * Solves the puzzle, invoking the underlying recursive search.
 	 */
 	public int solve() {
-		return 0; // YOUR CODE HERE
+		long startMoment = System.currentTimeMillis();
+		solvePuzzle(0);
+		long endMoment = System.currentTimeMillis();
+		timeElapsed = endMoment - startMoment;
+		return solution_count;
 	}
+	/**This is a recursive function searching for
+	 *  every possible solution and summing up their total count
+	 * 
+	 * @param point : current point of the board 
+	 * 					if point equals to the size of the 
+	 * 					spotList list than the puzzle is solved
+	 */
+	private void solvePuzzle(int point) {
+		// TODO Auto-generated method stub
+		if(solution_count>=MAX_solution_count)return;
+		if(point >spotList.size())return;
+		if(point == spotList.size()) {
+			if(solution_count == 0) {
+				for(int i=0 ; i< SIZE; i++) {
+					for(int j=0;j<SIZE; j++) {
+						solution_board[i][j]=sudoku_board[i][j];
+					}
+				}
+			}
+			solution_count++;
+			return;
+		}
+		
+		Spot curr = spotList.get(point);
+		if(curr.getVal()==0) {
+			Set<Integer> valid = curr.getvalidValues();
+			
+			for(Integer n : valid) {
+				curr.setVal(n);
+				solvePuzzle(point+1);
+			}
+			curr.setVal(0);
+		}
+	}
+
+	/**
+	 * If there exists a solution to the given sudoku board
+	 * 	return it as a string 
+	 * if there doesnt exist a solution then it returns an empty string
+	 * */
 	
 	public String getSolutionText() {
-		return ""; // YOUR CODE HERE
-	}
+		if(solution_count >=1) {
+			Sudoku solutSudoku=new Sudoku(solution_board);
+			return solutSudoku.toString();
+		}
+		return "";
 	
+	}
+	/*
+	 * overrides the toString method and convert sudoku board 
+	 * 			to string using StringBuilder Class
+	 * */
+	
+	@Override
+	public String toString() {
+		StringBuilder resStrBuffer = new StringBuilder();
+		
+		for(int i=0; i<SIZE; i++) {
+			for(int j = 0 ; j< SIZE; j++) {
+				if(i != 0 ) {
+					resStrBuffer.append(" ");
+				}
+				resStrBuffer.append(sudoku_board[i][j]);
+			}
+			resStrBuffer.append("\n");
+		}
+		
+		return resStrBuffer.toString();
+	}
+	/**
+	 * return the time spent on the solving puzzle
+	 * */
 	public long getElapsed() {
-		return 0; // YOUR CODE HERE
+		return timeElapsed; 
 	}
 
 }
