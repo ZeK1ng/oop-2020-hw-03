@@ -1,3 +1,5 @@
+import static org.junit.Assert.assertEquals;
+
 import java.util.*;
 
 /*
@@ -37,7 +39,7 @@ public class Sudoku {
 	// Provided hard 3 7 grid
 	// 1 solution this way, 6 solution_count if the 7 is changed to 0
 	public static final int[][] hardGrid = Sudoku.stringsToGrid(
-	"3 7 0 0 0 0 0 8 0",
+	"3 5 0 0 0 0 0 8 0",
 	"0 0 1 0 9 3 0 0 0",
 	"0 4 0 7 8 0 0 0 3",
 	"0 9 3 8 0 0 0 1 2",
@@ -70,7 +72,9 @@ public class Sudoku {
 		}
 		return result;
 	}
-	
+	public Sudoku(String sudstr) {
+		this(textToGrid(sudstr));
+	}
 	
 	/**
 	 * Given a single string containing 81 numbers, returns a 9x9 grid.
@@ -133,14 +137,6 @@ public class Sudoku {
 		System.out.println(sudoku.getSolutionText());
 	}
 	
-	
-	
-	private int sudoku_board[][];
-	private int solution_board[][];
-	private List<Spot> spotList;
-	private int solution_count;
-	private long timeElapsed;
-	
 	private class Spot implements Comparable<Spot>{
 		private int row,col,val ,validSize;
 		
@@ -149,6 +145,7 @@ public class Sudoku {
 			this.col = col;
 			val = 0 ;
 			validSize = getvalidValues().size();
+			assertEquals(this.getVal(), sudoku_board[row][col]);
 		}
 		public void setVal(int val) {
 			this.val  = val;
@@ -157,9 +154,16 @@ public class Sudoku {
 		public int getVal() {
 			return val;
 		}
-		public Set<Integer> getvalidValues(){
-			Set<Integer> res = new HashSet<>();
-			for(int i = 0 ;i<10; i++) {
+		public int getValidSize() {
+			return validSize;
+		}
+		/**
+		 * returns the set containing the valid values 
+		 * valid values are the valuse in range 1 to 9 inclusive those are not already in the board
+		 * */
+		public HashSet<Integer> getvalidValues(){
+			HashSet<Integer> res = new HashSet<Integer>();
+			for(int i = 1 ;i<SIZE+1; i++) {
 				res.add(i);
 			}
 			// clear possible rows
@@ -167,31 +171,46 @@ public class Sudoku {
 				res.remove(sudoku_board[i][this.col]);
 			}
 			for(int i = 0; i<SIZE; i++) {
-				res.remove(solution_board[this.row][i]);
+				res.remove(sudoku_board[this.row][i]);
 			}
-			int startR = (this.row/3)*PART;
-			int startC = (this.col/3)*PART;
+			
+			int startR = (this.row/PART)*PART;
+			int startC = (this.col/PART)*PART;
 			for(int i = startR; i < startR+PART; i++) {
-				for(int j = 0 ; j < startC+PART; j++) {
+				for(int j = startC ; j < startC+PART; j++) {
 					res.remove(sudoku_board[i][j]);
 				}
 			}
+//			System.out.println("GetValidVals.Size"+res.size());
 			return res;
 		}
 		
+		/**
+		 *	returns the difference between this.spot`s and the otherSpot`s
+		 *				validSizes   
+		 * 
+		 * */
 		@Override
 		public int compareTo(Spot otherSpot) {
-			// TODO Auto-generated method stub
-			return this.validSize - otherSpot.validSize;
+			
+			return this.validSize - otherSpot.getValidSize();
 		}
 
 	}
+	
+	
+	private int sudoku_board[][];
+	private int solution_board[][];
+	private List<Spot> spotList;
+	private int solution_count;
+	private long timeElapsed;
+	
+	
 	/**
 	 * Sets up based on the given ints.
 	 */
 	public Sudoku(int[][] ints) {
 		sudoku_board = new int[SIZE][SIZE];
-		spotList = new ArrayList<>();
 		solution_board = new int[SIZE][SIZE];
 		solution_count = 0;
 		timeElapsed= 0;
@@ -202,11 +221,14 @@ public class Sudoku {
 		}
 		initSpots();
 	}
+
 	
 	
-	
+	/**
+	 * initializes the SpotsList. adds for the points whose values are zero
+	 * */
 	private void initSpots() {
-		// TODO Auto-generated method stub
+		spotList = new ArrayList<Spot>();
 		for(int i = 0; i< SIZE; i++) {
 			for(int j =0 ; j< SIZE ; j++) {
 				if(sudoku_board[i][j] == 0 ) {
@@ -237,31 +259,37 @@ public class Sudoku {
 	 * 					spotList list than the puzzle is solved
 	 */
 	private void solvePuzzle(int point) {
-		// TODO Auto-generated method stub
+		// `
 		if(solution_count>=MAX_solution_count)return;
-		if(point >spotList.size())return;
+		if(point > spotList.size()) return;
+		
+		
+		
 		if(point == spotList.size()) {
 			if(solution_count == 0) {
 				for(int i=0 ; i< SIZE; i++) {
 					for(int j=0;j<SIZE; j++) {
 						solution_board[i][j]=sudoku_board[i][j];
 					}
+			
 				}
 			}
+			
 			solution_count++;
 			return;
 		}
 		
 		Spot curr = spotList.get(point);
-		if(curr.getVal()==0) {
-			Set<Integer> valid = curr.getvalidValues();
+		HashSet<Integer> valid = curr.getvalidValues();
 			
-			for(Integer n : valid) {
-				curr.setVal(n);
-				solvePuzzle(point+1);
-			}
+			
+		for(int n : valid) {
+			curr.setVal(n);
+			solvePuzzle(point+1);
 			curr.setVal(0);
 		}
+		
+		
 	}
 
 	/**
@@ -276,7 +304,6 @@ public class Sudoku {
 			return solutSudoku.toString();
 		}
 		return "";
-	
 	}
 	/*
 	 * overrides the toString method and convert sudoku board 
@@ -289,7 +316,7 @@ public class Sudoku {
 		
 		for(int i=0; i<SIZE; i++) {
 			for(int j = 0 ; j< SIZE; j++) {
-				if(i != 0 ) {
+				if(j != 0 ) {
 					resStrBuffer.append(" ");
 				}
 				resStrBuffer.append(sudoku_board[i][j]);
