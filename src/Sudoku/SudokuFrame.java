@@ -1,3 +1,5 @@
+package Sudoku;
+
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
@@ -17,7 +19,7 @@ import java.awt.event.*;
 	
 	public SudokuFrame() {
 		
-		super("Sudoku Solver");
+		super("Sudoku.Sudoku Solver");
 		setupTextAreas();
 		setupCheckers();
 		addListeners();
@@ -44,6 +46,7 @@ import java.awt.event.*;
 		
 		solved_area = new JTextArea(15,20);
 		solved_area.setBorder(new TitledBorder("Solution"));
+		solved_area.setEditable(false);
 		add(solved_area,BorderLayout.EAST);
 	}
 	

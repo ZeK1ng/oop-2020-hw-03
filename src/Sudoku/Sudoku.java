@@ -1,9 +1,11 @@
-import static org.junit.Assert.assertEquals;
+package Sudoku;
 
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /*
- * Encapsulates a Sudoku grid to be solved.
+ * Encapsulates a Sudoku.Sudoku grid to be solved.
  * CS108 Stanford.
  */
 public class Sudoku {
