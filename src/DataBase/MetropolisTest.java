@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.sql.SQLException;
+import java.sql.SQLNonTransientConnectionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +13,7 @@ public class MetropolisTest {
 
     private Metropolis mt;
     @Test
-    public void test() throws SQLException {
+    public void test() throws SQLException, SQLNonTransientConnectionException {
         mt = new Metropolis();
         mt.resetTable();
         mt.search("", "", "", false, false);
